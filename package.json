@@ -10,8 +10,8 @@
   "scripts": {
     "check": "knap validate templates/frontmatter.kmd && knap validate templates/reference-index.kmd",
     "render": "node scripts/build.mjs",
-    "html": "npm run render && pandoc build/report.md --citeproc --standalone -o build/report.html",
-    "pdf": "npm run render && pandoc build/report.md --citeproc --pdf-engine=xelatex -o build/report.pdf",
+    "html": "npm run render && pandoc build/report.md --citeproc --standalone --mathml -o build/report.html",
+    "pdf": "npm run html && \"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" --headless --no-pdf-header-footer --print-to-pdf=build/report.pdf build/report.html",
     "build": "npm run pdf",
     "clean": "node scripts/clean.mjs"
   },

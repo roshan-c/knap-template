@@ -6,28 +6,31 @@ run npm scripts. Knap templates generate the YAML front matter and the
 reference inventory; Pandoc converts the assembled document to HTML and PDF
 with citation processing.
 
-Nothing here is a web editor or a GUI, and nothing is pushed to GitHub. All
+Nothing here is a web editor or a GUI. All
 artifacts are produced locally from the sources in this directory.
 
 ## File roles
 
-| File | Role |
-| --- | --- |
-| `report.md` | The manuscript. Ordinary, human-edited Markdown with a title, abstract, math, and Pandoc citations (`[@knap; @pandoc]`). Contains the marker `<!-- GENERATED_REFERENCE_INVENTORY -->`, which the build replaces with the generated reference inventory. |
-| `project.json` | Machine-edited data: `meta` (title, author, date), `pipeline` (stages rendered as a table), and `references` (CSL JSON-style entries used for citations). |
-| `templates/frontmatter.kmd` | Knap template that renders the YAML front matter (title, author, date, references) using the `yaml_property` filter so Pandoc's citeproc can read the references. |
-| `templates/reference-index.kmd` | Knap template that sorts references by ID, lists each citation key and title with a link to its URL, and renders the `pipeline` array as a Markdown table. |
-| `scripts/build.mjs` | Node.js ESM script using Knap's API (`createEngine({ filters: standardFilters })`). Renders both templates, checks the marker, replaces it, prepends front matter, and writes `build/report.md` and `build/reference-index.md`. |
-| `scripts/clean.mjs` | Removes only the `build/` directory. |
-| `package.json` | Script aliases: `check`, `render`, `html`, `pdf`, `build`, `clean`. |
-| `.gitignore` | Ignores `node_modules/`, `build/`, and `.DS_Store`. |
+| File                            | Role                                                                                                                                                                                                                                                    |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `report.md`                     | The manuscript. Ordinary, human-edited Markdown with a title, abstract, math, and Pandoc citations (`[@knap; @pandoc]`). Contains the marker `<!-- GENERATED_REFERENCE_INVENTORY -->`, which the build replaces with the generated reference inventory. |
+| `project.json`                  | Machine-edited data: `meta` (title, author, date), `pipeline` (stages rendered as a table), and `references` (CSL JSON-style entries used for citations).                                                                                               |
+| `templates/frontmatter.kmd`     | Knap template that renders the YAML front matter (title, author, date, references) using the `yaml_property` filter so Pandoc's citeproc can read the references.                                                                                       |
+| `templates/reference-index.kmd` | Knap template that sorts references by ID, lists each citation key and title with a link to its URL, and renders the `pipeline` array as a Markdown table.                                                                                              |
+| `scripts/build.mjs`             | Node.js ESM script using Knap's API (`createEngine({ filters: standardFilters })`). Renders both templates, checks the marker, replaces it, prepends front matter, and writes `build/report.md` and `build/reference-index.md`.                         |
+| `scripts/clean.mjs`             | Removes only the `build/` directory.                                                                                                                                                                                                                    |
+| `package.json`                  | Script aliases: `check`, `render`, `html` (Pandoc + MathML), `pdf` (headless Chrome print of the HTML), `build`, `clean`.                                                                                                                               |
+| `.gitignore`                    | Ignores `node_modules/`, `build/`, and `.DS_Store`.                                                                                                                                                                                                     |
 
 ## Required external tools
 
 - **Node.js 20 or newer** (Knap is ESM-first and requires Node 20+).
-- **Pandoc** for HTML/PDF conversion and citation processing (`--citeproc`).
-- **XeLaTeX** or another working TeX installation for PDF output. The `pdf`
-  script uses `--pdf-engine=xelatex`. HTML output does not need TeX.
+- **Pandoc** for HTML conversion, citation processing (`--citeproc`), and
+  MathML output (`--mathml`).
+- **Google Chrome** for PDF output. The `pdf` script prints the generated
+  HTML to PDF with headless Chrome, so no TeX installation is needed and
+  MathML renders natively. (The script uses the macOS path
+  `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`.)
 
 ## Normal workflow
 
@@ -42,27 +45,12 @@ npm run pdf
 - `npm run check` validates both Knap templates (`knap validate`).
 - `npm run render` runs `scripts/build.mjs` and writes `build/report.md` and
   `build/reference-index.md`.
-- `npm run html` renders, then runs Pandoc with `--citeproc --standalone` to
-  produce `build/report.html`.
-- `npm run pdf` renders, then runs Pandoc with `--citeproc
-  --pdf-engine=xelatex` to produce `build/report.pdf` (requires XeLaTeX).
+- `npm run html` renders, then runs Pandoc with `--citeproc --standalone
+--mathml` to produce `build/report.html`. MathML renders natively in
+  modern browsers with no JavaScript or CDN.
+- `npm run pdf` builds the HTML first, then prints it to `build/report.pdf`
+  with headless Chrome (`--print-to-pdf`). No TeX installation is required.
 - `npm run clean` removes the `build/` directory.
-
-## Editing the report in VS Code
-
-Open this folder in VS Code and edit `report.md` directly. It is plain
-Markdown, so the built-in Markdown preview works. For a nicer writing
-experience:
-
-- Install the **Markdown All in One** extension (keyboard shortcuts,
-  table formatting, math preview).
-- Install the **Pandoc Citer** extension if you want autocompletion of
-  citation keys while writing `[@key]` citations.
-- The math is LaTeX-style (`$...$` inline, `$$...$$` display); several
-  extensions render it in the preview.
-
-`report.md` is the source of truth for prose and never gets overwritten by
-the build. Edit it freely; the build only reads it.
 
 ## Adding or modifying references
 
