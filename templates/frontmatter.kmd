@@ -1,0 +1,6 @@
+---
+{{ meta.title | yaml_property:"title" }}
+{{ meta.author | yaml_property:"author" }}
+{{ meta.date | yaml_property:"date" }}
+{{ references | yaml_property:"references" }}
+---

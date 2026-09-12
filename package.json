@@ -1,0 +1,21 @@
+{
+  "name": "knap-template",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local, source-first Markdown publishing with Knap templates and Pandoc",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "check": "knap validate templates/frontmatter.kmd && knap validate templates/reference-index.kmd",
+    "render": "node scripts/build.mjs",
+    "html": "npm run render && pandoc build/report.md --citeproc --standalone -o build/report.html",
+    "pdf": "npm run render && pandoc build/report.md --citeproc --pdf-engine=xelatex -o build/report.pdf",
+    "build": "npm run pdf",
+    "clean": "node scripts/clean.mjs"
+  },
+  "devDependencies": {
+    "knap": "0.4.2"
+  }
+}

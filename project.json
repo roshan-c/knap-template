@@ -1,0 +1,73 @@
+{
+  "meta": {
+    "title": "Local-First Markdown Publishing with Knap and Pandoc",
+    "author": "Roshan",
+    "date": "2025-06-12"
+  },
+  "pipeline": [
+    {
+      "stage": "Source",
+      "file": "report.md",
+      "tool": "VS Code",
+      "output": "Manuscript with citations and the generated-reference marker"
+    },
+    {
+      "stage": "Data",
+      "file": "project.json",
+      "tool": "VS Code",
+      "output": "Metadata, pipeline description, and CSL JSON references"
+    },
+    {
+      "stage": "Template",
+      "file": "templates/frontmatter.kmd, templates/reference-index.kmd",
+      "tool": "Knap 0.4.2",
+      "output": "YAML front matter and the reference inventory section"
+    },
+    {
+      "stage": "Render",
+      "file": "scripts/build.mjs",
+      "tool": "Node.js 20+",
+      "output": "build/report.md and build/reference-index.md"
+    },
+    {
+      "stage": "Publish",
+      "file": "build/report.md",
+      "tool": "Pandoc",
+      "output": "build/report.html and build/report.pdf"
+    }
+  ],
+  "references": [
+    {
+      "id": "knap",
+      "type": "webpage",
+      "author": [
+        {
+          "literal": "Knap"
+        }
+      ],
+      "title": "Knap: Turn data into Markdown",
+      "URL": "https://knap.md/",
+      "accessed": {
+        "date-parts": [
+          [2025, 6, 12]
+        ]
+      }
+    },
+    {
+      "id": "pandoc",
+      "type": "webpage",
+      "author": [
+        {
+          "literal": "MacFarlane, John"
+        }
+      ],
+      "title": "Pandoc User's Guide",
+      "URL": "https://pandoc.org/MANUAL.html",
+      "accessed": {
+        "date-parts": [
+          [2025, 6, 12]
+        ]
+      }
+    }
+  ]
+}
