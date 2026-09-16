@@ -19,7 +19,8 @@ artifacts are produced locally from the sources in this directory.
 | `templates/reference-index.kmd` | Knap template that sorts references by ID, lists each citation key and title with a link to its URL, and renders the `pipeline` array as a Markdown table.                                                                                              |
 | `scripts/build.mjs`             | Node.js ESM script using Knap's API (`createEngine({ filters: standardFilters })`). Renders both templates, checks the marker, replaces it, prepends front matter, and writes `build/report.md` and `build/reference-index.md`.                         |
 | `scripts/clean.mjs`             | Removes only the `build/` directory.                                                                                                                                                                                                                    |
-| `package.json`                  | Script aliases: `check`, `render`, `html` (Pandoc + MathML), `pdf` (headless Chrome print of the HTML), `build`, `clean`.                                                                                                                               |
+| `styles/hull-harvard.csl`       | Citation style: Hull Harvard (University of Hull), passed to Pandoc with `--csl`. Adapted from Cite Them Right 12th edition; edit this XML file to tune the output.                                                                                      |
+| `package.json`                  | Script aliases: `check`, `render`, `html` (Pandoc + MathML + Hull Harvard), `pdf` (headless Chrome print of the HTML), `build`, `clean`.                                                                                                               |
 | `.gitignore`                    | Ignores `node_modules/`, `build/`, and `.DS_Store`.                                                                                                                                                                                                     |
 
 ## Required external tools
@@ -45,9 +46,10 @@ npm run pdf
 - `npm run check` validates both Knap templates (`knap validate`).
 - `npm run render` runs `scripts/build.mjs` and writes `build/report.md` and
   `build/reference-index.md`.
-- `npm run html` renders, then runs Pandoc with `--citeproc --standalone
---mathml` to produce `build/report.html`. MathML renders natively in
-  modern browsers with no JavaScript or CDN.
+- `npm run html` renders, then runs Pandoc with `--citeproc --csl
+  styles/hull-harvard.csl --standalone --mathml` to produce
+  `build/report.html`. MathML renders natively in modern browsers with no
+  JavaScript or CDN.
 - `npm run pdf` builds the HTML first, then prints it to `build/report.pdf`
   with headless Chrome (`--print-to-pdf`). No TeX installation is required.
 - `npm run clean` removes the `build/` directory.
@@ -90,16 +92,36 @@ Pandoc resolves the keys against the `references` list in the generated YAML
 front matter and replaces the bracket syntax with formatted citations and a
 bibliography in the published output.
 
-## Custom citation styles
+## Citation style
 
-By default Pandoc uses the Chicago author-date style. To use a custom CSL
-style, download a `.csl` file (for example from
-<https://citationstyles.org/>) into the project and pass `--csl` to Pandoc.
-For example, to use IEEE:
+This project uses the University of Hull Harvard style, defined in
+`styles/hull-harvard.csl`. The University of Hull does not publish an
+official CSL file, so this style is adapted from the Cite Them Right 12th
+edition style (the standard UK Harvard) with these changes to follow the
+[Hull guide](https://libguides.hull.ac.uk/referencing/harvard):
+
+- Access information renders as `URL [Accessed 13 Jun 2025]`; the Hull
+  guide omits "Available at:" and uses square brackets. Pandoc's citeproc
+  cannot abbreviate month names, so months render in full (
+  e.g. "12 June 2025"); edit the `access` macro in the CSL if you need
+  abbreviations later.
+- In-text citations use "et al." from three authors.
+- The bibliography lists all authors up to eight, then "et al."
+- No date renders as `n.d.`; entries sort alphabetically by author.
+
+The file is plain XML. Edit it to tune details such as punctuation or the
+accessed-date format.
+
+## Using another citation style
+
+To switch styles, download a `.csl` file (for example from
+<https://citationstyles.org/> or the Zotero style repository at
+<https://www.zotero.org/styles>) into `styles/` and point `--csl` at it.
+For example, to use IEEE instead:
 
 ```bash
-pandoc build/report.md --citeproc --standalone --csl ieee.csl -o build/report.html
+pandoc build/report.md --citeproc --standalone --csl styles/ieee.csl -o build/report.html
 ```
 
-You can also add the option to the `html` and `pdf` scripts in
-`package.json` if you want one style for every build.
+You can also change the style permanently by editing the `--csl` path in
+the `html` script in `package.json`.

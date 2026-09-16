@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "key": "PROJ",
+    "name": "My project",
+    "description": "",
+    "nextTicketNumber": 2
+  },
+  "board": {
+    "columns": [
+      {
+        "id": "backlog",
+        "name": "Backlog",
+        "category": "not-started",
+        "wipLimit": null
+      },
+      {
+        "id": "in-progress",
+        "name": "In progress",
+        "category": "started",
+        "wipLimit": 4
+      },
+      {
+        "id": "done",
+        "name": "Done",
+        "category": "done",
+        "wipLimit": null
+      }
+    ],
+    "pullRequests": {
+      "openedColumnId": "in-progress",
+      "mergedColumnId": "done"
+    }
+  },
+  "sprints": {
+    "sprint-1": {
+      "id": "sprint-1",
+      "name": "First Sprint",
+      "state": "active",
+      "plannedStart": "2026-09-14T00:00:00.000Z",
+      "plannedEnd": "2026-09-16T23:59:59.999Z",
+      "actualStart": "2026-09-14T19:13:26.413Z",
+      "actualEnd": null,
+      "ticketIds": [],
+      "metrics": null
+    }
+  },
+  "tickets": {
+    "PROJ-1": {
+      "id": "PROJ-1",
+      "title": "Set up the first sprint",
+      "description": "Edit this ticket or create another one from the local board.",
+      "columnId": "done",
+      "rank": 5000,
+      "priority": "medium",
+      "storyPoints": 1,
+      "labels": [
+        "getting-started"
+      ],
+      "assignee": null,
+      "sprintId": null,
+      "createdAt": "2026-09-14T19:12:48.277Z",
+      "updatedAt": "2026-09-14T19:13:29.616Z",
+      "comments": []
+    }
+  }
+}
