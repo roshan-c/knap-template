@@ -3,7 +3,11 @@
     "title": "Local-First Markdown Publishing with Knap and Pandoc",
     "author": "Roshan",
     "date": "2026-11-07",
-    "abstract": "This report describes a small, local, source-first Markdown publishing pipeline. The manuscript lives in Markdown; metadata and bibliographic data live in JSON. Knap generates front matter and a build appendix, and Pandoc publishes HTML and PDF with citations and a bibliography."
+    "abstract": "This report describes a small, local, source-first Markdown publishing pipeline. The manuscript lives in Markdown; metadata and bibliographic data live in JSON. Knap generates front matter and a build appendix, and Pandoc publishes HTML and PDF with citations and a bibliography.",
+    "subtitle": "A reproducible workflow for university reports",
+    "module": "Research and academic practice",
+    "toc": true,
+    "wordLimit": 2000
   },
   "pipeline": [
     {

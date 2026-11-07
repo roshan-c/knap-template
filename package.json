@@ -10,13 +10,16 @@
   "scripts": {
     "check": "knap validate templates/frontmatter.kmd && knap validate templates/reference-index.kmd",
     "render": "node scripts/build.mjs",
-    "html": "npm run render && pandoc build/report.md --citeproc --csl styles/hull-harvard.csl --standalone --mathml -o build/report.html",
+    "html": "npm run render && node scripts/html.mjs",
     "pdf": "npm run html && node scripts/pdf.mjs",
     "build": "npm run pdf",
     "clean": "node scripts/clean.mjs",
-    "test": "node --test"
+    "test": "node --test",
+    "wordcount": "npm run render && node scripts/wordcount.mjs"
   },
   "devDependencies": {
-    "knap": "0.4.2"
+    "css-tree": "3.2.1",
+    "knap": "0.4.2",
+    "pele": "1.13.0"
   }
 }

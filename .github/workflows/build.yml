@@ -4,7 +4,7 @@ permissions:
   contents: read
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -17,9 +17,11 @@ jobs:
           version: '3.9.0.2'
       - run: npm run check
       - run: npm test
-      - run: npm run html
+      - run: npm run pdf
       - uses: actions/upload-artifact@v4
         with:
-          name: report-html
-          path: build/report.html
+          name: report
+          path: |
+            build/report.html
+            build/report.pdf
           if-no-files-found: error

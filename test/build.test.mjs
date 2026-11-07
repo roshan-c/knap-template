@@ -22,12 +22,12 @@ test('build assembles metadata, bibliography placement, and exactly one appendix
   for (const reference of project.references) assert.ok(frontmatter[1].includes(`id: "${reference.id}"`));
   const body = report.slice(frontmatter[0].length);
   assert.doesNotMatch(body, /^# /m, 'title belongs only in metadata');
-  assert.match(body, /## References\n\n::: \{#refs\}\n:::\n\n## Appendix: Build pipeline/);
+  assert.match(body, /## References \{.unnumbered\}\n\n::: \{#refs\}\n:::\n\n## Appendix: Build pipeline/);
   assert.equal(body.split('## Appendix: Build pipeline').length - 1, 1);
   assert.equal(body.split('### Citation keys').length - 1, 1);
   assert.equal(body.split('### Pipeline').length - 1, 1);
   assert.ok(!body.includes(APPENDIX_MARKER));
-  assert.equal(body.split('## Appendix: Build pipeline')[1].trim(), inventory.replace(/^# Reference Index\n\n/, '').trim());
+  assert.equal(body.split('## Appendix: Build pipeline')[1].replace(/^ \{.unnumbered\}/, '').trim(), inventory.replace(/^# Reference Index\n\n/, '').trim());
 });
 
 test('appendix insertion preserves replacement metacharacters and surrounding manuscript', () => {
@@ -35,7 +35,7 @@ test('appendix insertion preserves replacement metacharacters and surrounding ma
   assert.equal(replaceAppendix(`Before\n${APPENDIX_MARKER}\nAfter`, inventory), `Before\n${inventory}\nAfter`);
 });
 
-test('assembly rejects missing and duplicate appendix markers', () => {
-  assert.throws(() => replaceAppendix('No marker', 'inventory'), /report\.md is missing.*marker/);
-  assert.throws(() => replaceAppendix(`${APPENDIX_MARKER}\n${APPENDIX_MARKER}`, 'inventory'), /report\.md contains 2.*expected exactly one/);
+test('assembly allows no appendix and rejects duplicate markers', () => {
+  assert.equal(replaceAppendix('No marker', 'inventory'), 'No marker');
+  assert.throws(() => replaceAppendix(`${APPENDIX_MARKER}\n${APPENDIX_MARKER}`, 'inventory'), /report\.md contains 2.*expected at most one/);
 });

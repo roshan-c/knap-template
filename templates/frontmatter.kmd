@@ -1,5 +1,9 @@
 ---
 {{ meta.title | yaml_property:"title" }}
+{{ meta.subtitle | yaml_property:"subtitle" }}
+{{ meta.module | yaml_property:"module" }}
+{{ meta.toc | yaml_property:"toc" }}
+{{ meta.wordLimit | yaml_property:"wordLimit" }}
 {{ meta.author | yaml_property:"author" }}
 {{ meta.abstract | yaml_property:"abstract" }}
 {{ meta.date | yaml_property:"date" }}

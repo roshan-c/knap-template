@@ -1,6 +1,7 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { renderMermaid } from './mermaid.mjs';
 import { replaceAppendix } from './assemble.mjs';
 import { createEngine, standardFilters } from 'knap';
 
@@ -12,6 +13,7 @@ const BUILD_DIR = path.join(ROOT, 'build');
 // Load data and create the Knap engine.
 // ---------------------------------------------------------------------------
 const project = JSON.parse(await readFile(path.join(ROOT, 'project.json'), 'utf8'));
+project.meta.toc ??= true;
 const engine = createEngine({ filters: standardFilters });
 
 // ---------------------------------------------------------------------------
@@ -55,7 +57,7 @@ const source = await readFile(path.join(ROOT, 'report.md'), 'utf8');
 
 let body;
 try {
-  body = replaceAppendix(source, inventory);
+  body = replaceAppendix(await renderMermaid(source, { buildDir: BUILD_DIR, sourceFile: 'report.md' }), inventory);
 } catch (error) {
   console.error(error.message);
   process.exit(1);
