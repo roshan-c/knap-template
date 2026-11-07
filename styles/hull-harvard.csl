@@ -10,16 +10,13 @@
 
     - Access information: "URL [Accessed D Mon YYYY]"
       (the Hull guide omits "Available at:" and uses square brackets).
-      Note: Pandoc's citeproc cannot abbreviate month names, so the
-      accessed date renders as e.g. "12 June 2025" rather than
-      "12 Jun 2025".
+      Months are abbreviated without a trailing period, e.g. "12 Jun 2025".
     - In-text citations use "et al." from three authors (Hull rule).
     - The bibliography lists all authors up to eight, then "et al."
       (Hull rule).
     - No date renders as `n.d.`; entries sort alphabetically by author.
 
-  Known citeproc limitations: month names cannot be abbreviated, and
-  two-author citations always use "and" (CSL cannot print "&" inside
+  Two-author citations always use "and" (CSL cannot print "&" inside
   parentheses and "and" in narrative citations as the Hull guide asks).
 
   Edit this file to tune the output further. Changing the
@@ -43,6 +40,7 @@
   <locale xml:lang="en">
     <terms>
       <term name="no date">n.d.</term>
+      <term name="month-06" form="short">Jun</term>
       <term name="editor" form="short">
         <single>ed.</single>
         <multiple>eds</multiple>
@@ -135,7 +133,7 @@
           <text term="accessed" text-case="capitalize-first"/>
           <date variable="accessed" delimiter=" ">
             <date-part name="day"/>
-            <date-part name="month" form="short"/>
+            <date-part name="month" form="short" strip-periods="true"/>
             <date-part name="year"/>
           </date>
         </group>

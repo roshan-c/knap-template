@@ -1,12 +1,12 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { replaceAppendix } from './assemble.mjs';
 import { createEngine, standardFilters } from 'knap';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const TEMPLATE_DIR = path.join(ROOT, 'templates');
 const BUILD_DIR = path.join(ROOT, 'build');
-const MARKER = '<!-- GENERATED_REFERENCE_INVENTORY -->';
 
 // ---------------------------------------------------------------------------
 // Load data and create the Knap engine.
@@ -53,14 +53,13 @@ const inventory = (await renderTemplate('reference-index.kmd')).trim();
 // ---------------------------------------------------------------------------
 const source = await readFile(path.join(ROOT, 'report.md'), 'utf8');
 
-if (!source.includes(MARKER)) {
-  console.error(
-    `report.md is missing the generated-reference marker:\n  ${MARKER}`,
-  );
+let body;
+try {
+  body = replaceAppendix(source, inventory);
+} catch (error) {
+  console.error(error.message);
   process.exit(1);
 }
-
-const body = source.replace(MARKER, inventory);
 const report = `${frontmatter}\n\n${body}\n`;
 
 // ---------------------------------------------------------------------------

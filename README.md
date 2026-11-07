@@ -1,63 +1,84 @@
 # Knap Template
 
-A small, local, source-first Markdown publishing project. You write plain
-Markdown in `report.md`, keep metadata and references in `project.json`, and
-run npm scripts. Knap templates generate the YAML front matter and the
-reference inventory; Pandoc converts the assembled document to HTML and PDF
-with citation processing.
-
-Nothing here is a web editor or a GUI. All
-artifacts are produced locally from the sources in this directory.
+A small, local, source-first Markdown publishing project. Write the manuscript
+in `report.md`, keep metadata and CSL JSON references in `project.json`, and
+use Knap templates and Pandoc to publish HTML and PDF. No web editor or remote
+service is required.
 
 ## File roles
 
-| File                            | Role                                                                                                                                                                                                                                                    |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `report.md`                     | The manuscript. Ordinary, human-edited Markdown with a title, abstract, math, and Pandoc citations (`[@knap; @pandoc]`). Contains the marker `<!-- GENERATED_REFERENCE_INVENTORY -->`, which the build replaces with the generated reference inventory. |
-| `project.json`                  | Machine-edited data: `meta` (title, author, date), `pipeline` (stages rendered as a table), and `references` (CSL JSON-style entries used for citations).                                                                                               |
-| `templates/frontmatter.kmd`     | Knap template that renders the YAML front matter (title, author, date, references) using the `yaml_property` filter so Pandoc's citeproc can read the references.                                                                                       |
-| `templates/reference-index.kmd` | Knap template that sorts references by ID, lists each citation key and title with a link to its URL, and renders the `pipeline` array as a Markdown table.                                                                                              |
-| `scripts/build.mjs`             | Node.js ESM script using Knap's API (`createEngine({ filters: standardFilters })`). Renders both templates, checks the marker, replaces it, prepends front matter, and writes `build/report.md` and `build/reference-index.md`.                         |
-| `scripts/clean.mjs`             | Removes only the `build/` directory.                                                                                                                                                                                                                    |
-| `styles/hull-harvard.csl`       | Citation style: Hull Harvard (University of Hull), passed to Pandoc with `--csl`. Adapted from Cite Them Right 12th edition; edit this XML file to tune the output.                                                                                      |
-| `package.json`                  | Script aliases: `check`, `render`, `html` (Pandoc + MathML + Hull Harvard), `pdf` (headless Chrome print of the HTML), `build`, `clean`.                                                                                                               |
-| `.gitignore`                    | Ignores `node_modules/`, `build/`, and `.DS_Store`.                                                                                                                                                                                                     |
+| File | Role |
+| --- | --- |
+| `report.md` | Manuscript with math and Pandoc citations. References contains only the `::: {#refs}` bibliography div; an appendix after it contains the single `<!-- GENERATED_BUILD_APPENDIX -->` marker. No title H1 or abstract heading is needed here. |
+| `project.json` | `meta` (title, author, date, abstract), pipeline records, and CSL JSON references. |
+| `templates/frontmatter.kmd` | Emits title, author, date, abstract, and references via Knap's `yaml_property` filter. Pandoc renders the title and abstract in its title block. |
+| `templates/reference-index.kmd` | Sorts references by ID, lists citation keys and linked titles, and renders the pipeline table for the appendix. |
+| `scripts/build.mjs` | Renders Knap templates, assembles the manuscript, and writes `build/report.md` plus `build/reference-index.md`. Reports template diagnostics and missing or repeated markers. |
+| `scripts/assemble.mjs` | Replaces exactly one appendix marker, preserving literal replacement text such as `$&`. |
+| `scripts/pdf.mjs` | Resolves a Chromium browser and prints the HTML using an absolute file URL. |
+| `scripts/clean.mjs` | Removes only `build/`. |
+| `test/build.test.mjs` | Node tests for generated document structure, literal insertion, and marker diagnostics. |
+| `styles/hull-harvard.csl` | Hull Harvard citation style, adapted from Cite Them Right 12th edition. |
+| `.github/workflows/build.yml` | Push/PR checks, tests, HTML build, and HTML artifact upload. |
+| `package.json`, `package-lock.json` | npm scripts and locked Knap dependency. |
+| `.gitignore` | Ignores `node_modules/`, `build/`, and `.DS_Store`. |
 
 ## Required external tools
 
-- **Node.js 20 or newer** (Knap is ESM-first and requires Node 20+).
-- **Pandoc** for HTML conversion, citation processing (`--citeproc`), and
-  MathML output (`--mathml`).
-- **Google Chrome** for PDF output. The `pdf` script prints the generated
-  HTML to PDF with headless Chrome, so no TeX installation is needed and
-  MathML renders natively. (The script uses the macOS path
-  `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`.)
+- **Node.js 20 or newer**; CI uses Node 22.
+- **Pandoc** with citeproc and MathML support (tested locally with 3.9.0.2).
+- **A Chromium-based browser** for PDF output. No TeX installation is needed.
 
 ## Normal workflow
 
 ```bash
 npm install
 npm run check
-npm run render
+npm test
 npm run html
 npm run pdf
 ```
 
-- `npm run check` validates both Knap templates (`knap validate`).
-- `npm run render` runs `scripts/build.mjs` and writes `build/report.md` and
-  `build/reference-index.md`.
+- `npm run check` statically validates both Knap templates.
+- `npm run render` writes `build/report.md` and `build/reference-index.md`.
+- `npm test` uses `node --test` without extra dependencies. It runs the build
+  and checks front matter, bibliography placement, appendix insertion, literal
+  dollar sequences, and missing/duplicate marker errors.
 - `npm run html` renders, then runs Pandoc with `--citeproc --csl
-  styles/hull-harvard.csl --standalone --mathml` to produce
-  `build/report.html`. MathML renders natively in modern browsers with no
-  JavaScript or CDN.
-- `npm run pdf` builds the HTML first, then prints it to `build/report.pdf`
-  with headless Chrome (`--print-to-pdf`). No TeX installation is required.
-- `npm run clean` removes the `build/` directory.
+  styles/hull-harvard.csl --standalone --mathml` to write `build/report.html`.
+  MathML renders natively without JavaScript or a CDN.
+- `npm run pdf` rebuilds HTML and prints `build/report.pdf` with headless
+  Chromium. `npm run build` is an alias for this full PDF pipeline.
+- `npm run clean` removes `build/`.
+
+The PDF script tries `$CHROME_PATH` first (an executable path, without embedded
+quotes), then common installation locations: Google Chrome, Chromium,
+Microsoft Edge, and Brave under `/Applications` and `~/Applications` on macOS;
+Chrome, Chromium, Edge, and Brave under Program Files, Program Files (x86), and
+Local AppData on Windows. It also searches PATH for `google-chrome`,
+`google-chrome-stable`, `chromium`, and `chromium-browser` (or `chrome.exe`,
+`chromium.exe`, `msedge.exe`, and `brave.exe` on Windows).
+
+For example:
+
+```bash
+CHROME_PATH="/path/to/browser" npm run pdf
+```
+
+If no executable is found, the script lists every path tried and exits
+non-zero. Browser launch/print failures also exit non-zero; a successful run
+checks that the output starts with a PDF signature.
+
+## CI
+
+On every push and pull request, GitHub Actions installs Node 22, runs `npm ci`,
+installs Pandoc 3.9.0.2, runs `npm run check`, `npm test`, and `npm run html`, then
+uploads `build/report.html` as the `report-html` artifact. PDF generation is
+local and requires a browser.
 
 ## Adding or modifying references
 
-Edit `project.json`. Each entry in the `references` array is a CSL JSON
-object. A minimal entry looks like:
+Edit `project.json`. Each reference is a CSL JSON object, for example:
 
 ```json
 {
@@ -65,32 +86,34 @@ object. A minimal entry looks like:
   "type": "webpage",
   "author": [{ "literal": "Knap" }],
   "title": "Knap: Turn data into Markdown",
-  "URL": "https://knap.md/"
+  "URL": "https://knap.md/",
+  "issued": { "date-parts": [[2026]] },
+  "accessed": { "date-parts": [[2026, 11, 7]] }
 }
 ```
 
-Rules:
+Use a unique `id` as the citation key and a CSL type such as `webpage`,
+`article-journal`, or `book`. Use `family`/`given` for people's names and
+`literal` for organizations. Supply publication (`issued`) and access dates
+when known. The sample web references use 2026 as their edition year.
 
-- `id` must be unique. It is the citation key you type in `report.md`.
-- `type` should be a CSL type such as `webpage`, `article-journal`, or `book`.
-- Use `author` with `family`/`given` for real names, or `literal` for
-  organizations.
-
-After editing, run `npm run render` to regenerate the front matter and the
-reference inventory.
+Run `npm run render` to regenerate front matter and the appendix. Knap's
+built-in `sort` orders reference records by ID, `yaml_property` serializes
+named YAML properties, and `table` renders pipeline records as a Markdown
+table. `build/reference-index.md` remains a separate inventory artifact.
 
 ## Citing a reference from `report.md`
 
-Use Pandoc's citation syntax with the reference `id`:
+Use Pandoc's citation syntax with a reference ID:
 
-- One citation: `[@knap]` → (Knap)
-- Multiple: `[@knap; @pandoc]` → (Knap; MacFarlane, John)
+- One citation: `[@pandoc]` → (MacFarlane, 2026)
+- Multiple: `[@knap; @pandoc]` → (Knap, 2026; MacFarlane, 2026)
 - Suppress the author: `[-@pandoc]`
 - Locators: `[@pandoc, pp. 12-15]`
 
-Pandoc resolves the keys against the `references` list in the generated YAML
-front matter and replaces the bracket syntax with formatted citations and a
-bibliography in the published output.
+Pandoc resolves the generated YAML references, formats in-text citations,
+and inserts the bibliography into the `#refs` div under References. The
+citation-key inventory and pipeline table follow in Appendix: Build pipeline.
 
 ## Citation style
 
@@ -101,10 +124,8 @@ edition style (the standard UK Harvard) with these changes to follow the
 [Hull guide](https://libguides.hull.ac.uk/referencing/harvard):
 
 - Access information renders as `URL [Accessed 13 Jun 2025]`; the Hull
-  guide omits "Available at:" and uses square brackets. Pandoc's citeproc
-  cannot abbreviate month names, so months render in full (
-  e.g. "12 June 2025"); edit the `access` macro in the CSL if you need
-  abbreviations later.
+  guide omits "Available at:" and uses square brackets. Months use short
+  names without periods, with an explicit `Jun` override for June.
 - In-text citations use "et al." from three authors.
 - The bibliography lists all authors up to eight, then "et al."
 - No date renders as `n.d.`; entries sort alphabetically by author.

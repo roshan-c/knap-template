@@ -11,17 +11,12 @@
     "check": "knap validate templates/frontmatter.kmd && knap validate templates/reference-index.kmd",
     "render": "node scripts/build.mjs",
     "html": "npm run render && pandoc build/report.md --citeproc --csl styles/hull-harvard.csl --standalone --mathml -o build/report.html",
-    "pdf": "npm run html && \"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" --headless --no-pdf-header-footer --print-to-pdf=build/report.pdf build/report.html",
+    "pdf": "npm run html && node scripts/pdf.mjs",
     "build": "npm run pdf",
     "clean": "node scripts/clean.mjs",
-    "board": "triathlon serve",
-    "board:render": "triathlon render",
-    "board:validate": "triathlon validate",
-    "board:metrics": "triathlon metrics",
-    "board:check": "triathlon validate && triathlon render --check"
+    "test": "node --test"
   },
   "devDependencies": {
-    "knap": "0.4.2",
-    "triathlon": "^0.1.0"
+    "knap": "0.4.2"
   }
 }

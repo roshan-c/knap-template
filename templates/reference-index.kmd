@@ -1,8 +1,10 @@
+### Citation keys
+
 {% set ordered = references | sort:"id" %}
 {% for ref in ordered %}
 - `{{ ref.id }}` — [{{ ref.title }}]({{ ref.URL }})
 {% endfor %}
 
-## Pipeline
+### Pipeline
 
 {{ pipeline | table }}

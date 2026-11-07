@@ -1,0 +1,25 @@
+name: Build report
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: pandoc/actions/setup@v1
+        with:
+          version: '3.9.0.2'
+      - run: npm run check
+      - run: npm test
+      - run: npm run html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: report-html
+          path: build/report.html
+          if-no-files-found: error

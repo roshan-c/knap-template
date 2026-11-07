@@ -2,14 +2,15 @@
   "meta": {
     "title": "Local-First Markdown Publishing with Knap and Pandoc",
     "author": "Roshan",
-    "date": "2025-06-12"
+    "date": "2026-11-07",
+    "abstract": "This report describes a small, local, source-first Markdown publishing pipeline. The manuscript lives in Markdown; metadata and bibliographic data live in JSON. Knap generates front matter and a build appendix, and Pandoc publishes HTML and PDF with citations and a bibliography."
   },
   "pipeline": [
     {
       "stage": "Source",
       "file": "report.md",
       "tool": "VS Code",
-      "output": "Manuscript with citations and the generated-reference marker"
+      "output": "Manuscript with citations and the generated-build-appendix marker"
     },
     {
       "stage": "Data",
@@ -21,7 +22,7 @@
       "stage": "Template",
       "file": "templates/frontmatter.kmd, templates/reference-index.kmd",
       "tool": "Knap 0.4.2",
-      "output": "YAML front matter and the reference inventory section"
+      "output": "YAML front matter and the build appendix"
     },
     {
       "stage": "Render",
@@ -32,7 +33,7 @@
     {
       "stage": "Publish",
       "file": "build/report.md",
-      "tool": "Pandoc",
+      "tool": "Pandoc + headless Chromium browser",
       "output": "build/report.html and build/report.pdf"
     }
   ],
@@ -49,7 +50,18 @@
       "URL": "https://knap.md/",
       "accessed": {
         "date-parts": [
-          [2025, 6, 12]
+          [
+            2026,
+            11,
+            7
+          ]
+        ]
+      },
+      "issued": {
+        "date-parts": [
+          [
+            2026
+          ]
         ]
       }
     },
@@ -58,14 +70,26 @@
       "type": "webpage",
       "author": [
         {
-          "literal": "MacFarlane, John"
+          "family": "MacFarlane",
+          "given": "John"
         }
       ],
       "title": "Pandoc User's Guide",
       "URL": "https://pandoc.org/MANUAL.html",
       "accessed": {
         "date-parts": [
-          [2025, 6, 12]
+          [
+            2026,
+            11,
+            7
+          ]
+        ]
+      },
+      "issued": {
+        "date-parts": [
+          [
+            2026
+          ]
         ]
       }
     }

@@ -1,21 +1,11 @@
-# Local-First Markdown Publishing with Knap and Pandoc
-
-## Abstract
-
-This report describes a small, local, source-first Markdown publishing
-pipeline. The manuscript lives in a single ordinary Markdown file while
-metadata, pipeline facts, and bibliographic data live in a companion JSON
-file. Knap templates generate the YAML front matter and the reference
-inventory at build time, and Pandoc converts the assembled document to HTML
-and PDF with citation processing. The writing workflow stays in a plain text
-editor; no web editor or remote service is required.
-
 ## Introduction
 
 The pipeline is intentionally small. You write in `report.md`, keep data in
-`project.json`, and run npm scripts. Knap renders templates such as the
-Showdown-style filter `sort` and the `yaml_property` filter, which emits
-Pandoc-ready YAML metadata for citations.
+`project.json`, and run npm scripts. Knap's built-in `sort` filter orders
+reference records by ID, `yaml_property` serializes named YAML properties,
+and `table` turns the pipeline records into a Markdown table. The title and
+abstract come from metadata. References contains the citeproc bibliography;
+the appendix holds the generated citation-key inventory and pipeline table.
 
 ## A small math example
 
@@ -39,4 +29,9 @@ bibliography instead of unresolved bracket syntax.
 
 ## References
 
-<!-- GENERATED_REFERENCE_INVENTORY -->
+::: {#refs}
+:::
+
+## Appendix: Build pipeline
+
+<!-- GENERATED_BUILD_APPENDIX -->
