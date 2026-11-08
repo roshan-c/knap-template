@@ -15,7 +15,8 @@
     "build": "npm run pdf",
     "clean": "node scripts/clean.mjs",
     "test": "node --test",
-    "wordcount": "npm run render && node scripts/wordcount.mjs"
+    "wordcount": "npm run render && node scripts/wordcount.mjs",
+    "verify": "node scripts/verify.mjs"
   },
   "devDependencies": {
     "css-tree": "3.2.1",

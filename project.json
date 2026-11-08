@@ -7,7 +7,8 @@
     "subtitle": "A reproducible workflow for university reports",
     "module": "Research and academic practice",
     "toc": true,
-    "wordLimit": 2000
+    "wordLimit": 2000,
+    "pageLimit": null
   },
   "pipeline": [
     {

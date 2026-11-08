@@ -41,14 +41,19 @@ export function countWords(document, { includeCitations = true } = {}) {
   return (text.join(' ').match(/[\p{L}\p{N}]+(?:[’'-][\p{L}\p{N}]+)*/gu) ?? []).length;
 }
 
-export function printWordCount(file) {
-  const document = JSON.parse(execFileSync('pandoc', [file, ...renderingFilters, '-t', 'json'], { encoding: 'utf8' }));
-  const count = countWords(document);
-  const excluding = countWords(document, { includeCitations: false });
+export function measureWordCount(file, { cwd } = {}) {
+  const document = JSON.parse(execFileSync('pandoc', [file, ...renderingFilters, '-t', 'json'], { encoding: 'utf8', ...(cwd ? { cwd } : {}) }));
+  const words = countWords(document);
+  const wordsExcludingCitations = countWords(document, { includeCitations: false });
   const limit = Number(inlineText(document.meta.wordLimit?.c));
-  console.log(`Word count: ${count} (${excluding} excluding in-text citations)${limit > 0 ? ` — ${(count / limit * 100).toFixed(1)}% of ${limit}` : ''}`);
-  if (limit > 0 && count > limit) console.warn(`Warning: word limit exceeded by ${count - limit} words (including in-text citations).`);
-  return count;
+  return { words, wordsExcludingCitations, limit: Number.isFinite(limit) && limit > 0 ? limit : null };
+}
+
+export function printWordCount(file) {
+  const { words, wordsExcludingCitations, limit } = measureWordCount(file);
+  console.log(`Word count: ${words} (${wordsExcludingCitations} excluding in-text citations)${limit ? ` — ${(words / limit * 100).toFixed(1)}% of ${limit}` : ''}`);
+  if (limit && words > limit) console.warn(`Warning: word limit exceeded by ${words - limit} words (including in-text citations).`);
+  return words;
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   printWordCount(process.argv[2] ?? 'build/report.md');
