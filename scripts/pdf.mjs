@@ -1,4 +1,4 @@
-import { constants } from 'node:fs';
+import { constants, readdirSync } from 'node:fs';
 import { access, mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import os from 'node:os';
@@ -8,9 +8,78 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const output = path.join(root, 'build', 'report.pdf');
 
-function browserCandidates() {
+// Puppeteer stores installs as <cache>/<product>/<platform>-<version>/<bundle>/.
+// Sort by the version in the directory name so the newest install wins.
+function versionDirectories(directory) {
+  let entries;
+  try {
+    entries = readdirSync(directory, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  return entries
+    .filter(entry => entry.isDirectory())
+    .map(entry => {
+      const match = entry.name.match(/(\d+(?:\.\d+)+)/);
+      return { name: entry.name, version: match ? match[1].split('.').map(Number) : [0] };
+    })
+    .sort((a, b) => {
+      for (let i = 0; i < Math.max(a.version.length, b.version.length); i++) {
+        const difference = (b.version[i] ?? 0) - (a.version[i] ?? 0);
+        if (difference) return difference;
+      }
+      return 0;
+    })
+    .map(entry => entry.name);
+}
+
+function childDirectories(directory) {
+  try {
+    return readdirSync(directory, { withFileTypes: true })
+      .filter(entry => entry.isDirectory())
+      .map(entry => path.join(directory, entry.name));
+  } catch {
+    return [];
+  }
+}
+
+function puppeteerCandidates() {
+  const cache = process.env.PUPPETEER_CACHE_DIR ?? path.join(os.homedir(), '.cache', 'puppeteer');
+  const candidates = [];
+
+  const shellRoot = path.join(cache, 'chrome-headless-shell');
+  for (const platform of versionDirectories(shellRoot)) {
+    const platformDirectory = path.join(shellRoot, platform);
+    for (const bundle of childDirectories(platformDirectory)) {
+      candidates.push(path.join(bundle, process.platform === 'win32'
+        ? 'chrome-headless-shell.exe'
+        : 'chrome-headless-shell'));
+    }
+  }
+
+  const chromeRoot = path.join(cache, 'chrome');
+  for (const platform of versionDirectories(chromeRoot)) {
+    const platformDirectory = path.join(chromeRoot, platform);
+    for (const bundle of childDirectories(platformDirectory)) {
+      if (process.platform === 'darwin') {
+        candidates.push(path.join(bundle, 'Google Chrome for Testing.app', 'Contents', 'MacOS', 'Google Chrome for Testing'));
+      } else {
+        candidates.push(path.join(bundle, process.platform === 'win32' ? 'chrome.exe' : 'chrome'));
+      }
+    }
+  }
+
+  return candidates;
+}
+
+export function browserCandidates() {
   const candidates = [];
   if (process.env.CHROME_PATH) candidates.push(path.resolve(process.env.CHROME_PATH));
+  // Tests and constrained machines can request only the explicit CHROME_PATH.
+  const automatic = !process.env.KNAP_NO_BROWSER_SEARCH || process.env.KNAP_NO_BROWSER_SEARCH === '0';
+  if (!automatic) return [...new Set(candidates)];
+
+  candidates.push(...puppeteerCandidates());
   if (process.platform === 'darwin') {
     for (const base of ['/Applications', path.join(os.homedir(), 'Applications')]) {
       for (const [app, executable] of [
@@ -36,20 +105,25 @@ function browserCandidates() {
   return [...new Set(candidates)];
 }
 
-async function main() {
+export async function findBrowser() {
   const tried = [];
-  let browser;
   for (const candidate of browserCandidates()) {
     tried.push(candidate);
     try {
       await access(candidate, constants.X_OK);
-      browser = candidate;
-      break;
+      return { browser: candidate, tried };
     } catch { /* Continue through known locations. */ }
   }
-  if (!browser) {
-    throw new Error(`No Chromium-based browser found. Install Chrome, Chromium, Edge or Brave, or set CHROME_PATH to its executable.\nTried:\n${tried.map(candidate => `  ${candidate}`).join('\n') || '  (no candidates)'}`);
-  }
+  return { browser: undefined, tried };
+}
+
+export function missingBrowserMessage(tried) {
+  return `No Chromium-based browser found. Install Chrome, Chromium, Edge or Brave, set CHROME_PATH to its executable, or fetch a headless browser with:\n  npx @puppeteer/browsers install chrome-headless-shell@stable --path ~/.cache/puppeteer\nTried:\n${tried.map(candidate => `  ${candidate}`).join('\n') || '  (no candidates)'}`;
+}
+
+export async function printPdf() {
+  const { browser, tried } = await findBrowser();
+  if (!browser) throw new Error(missingBrowserMessage(tried));
   await access(path.join(root, 'build', 'report.html'));
   await mkdir(path.dirname(output), { recursive: true });
   await rm(output, { force: true });
@@ -72,7 +146,9 @@ async function main() {
   }
 }
 
-main().catch(error => {
-  console.error(`[pdf] ${error.message}`);
-  process.exitCode = 1;
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  printPdf().catch(error => {
+    console.error(`[pdf] ${error.message}`);
+    process.exitCode = 1;
+  });
+}
