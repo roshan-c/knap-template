@@ -30,6 +30,7 @@ npm run check
 npm test
 npm run html
 npm run wordcount
+npm run verify
 npm run pdf
 ```
 
@@ -42,16 +43,32 @@ npm run pdf
   `--resource-path=build:.`. CSS and images are embedded, so the HTML can be
   moved without its source assets. Mathematics uses native MathML without a CDN.
 - `wordcount` renders and counts the assembled document using Pandoc's AST.
+- `verify` runs the full build, then checks the PDF page count, both word
+  counts, `wordLimit` and `pageLimit`, and Pandoc warnings that mean broken
+  output. It exits 0 only when every check passes. `npm run verify -- --json`
+  prints one JSON object for the Quire editor.
 - `pdf` rebuilds HTML, then prints `build/report.pdf` with headless Chromium.
   `build` is an alias for `pdf`.
 - `clean` removes only `build/`.
 
-The PDF script tries `CHROME_PATH`, common Chrome/Chromium/Edge/Brave installation
-locations on macOS and Windows, then browser names on PATH. For example:
+The PDF script tries `CHROME_PATH`, Puppeteer's managed browser cache
+(`~/.cache/puppeteer`, newest `chrome-headless-shell` or Chrome for Testing),
+common Chrome/Chromium/Edge/Brave installation locations on macOS and Windows,
+then browser names on PATH. To fetch a headless browser without installing
+Chrome:
+
+```sh
+npx @puppeteer/browsers install chrome-headless-shell@stable --path ~/.cache/puppeteer
+```
+
+For example:
 
 ```sh
 CHROME_PATH="/path/to/browser" npm run pdf
 ```
+
+Set `KNAP_NO_BROWSER_SEARCH=1` to disable the automatic search and use only
+`CHROME_PATH`.
 
 It uses an isolated temporary profile, disables Chrome's own headers and
 footers with `--no-pdf-header-footer`, and checks the output's PDF signature.
@@ -71,7 +88,8 @@ Edit `project.json`:
     "date": "2026-11-07",
     "abstract": "A concise summary of your report.",
     "toc": true,
-    "wordLimit": 2000
+    "wordLimit": 2000,
+    "pageLimit": null
   }
 }
 ```
@@ -79,8 +97,12 @@ Edit `project.json`:
 `title`, `author`, `date` and `abstract` populate the title page. `subtitle` and
 `module` may be omitted. ISO dates display in British long format (for example,
 `7 November 2026`); the stored metadata stays ISO. Other date strings display unchanged. `toc` defaults to true; set it to false to omit the
-contents page. `wordLimit` is optional and should be a positive number. Metadata
-is emitted through `templates/frontmatter.kmd` using Knap's `yaml_property`.
+contents page. `wordLimit` is optional and should be a positive number; it is
+emitted through `templates/frontmatter.kmd` using Knap's `yaml_property`.
+`pageLimit` is optional and should be a positive number or `null`. The sample
+uses `null` to disable the page check. Both limits are used by `npm run verify`,
+not by the HTML template. `npm run html` and `npm run wordcount` only warn about
+the word limit; `verify` fails.
 
 `templates/report.html` places the title, metadata and abstract on the first
 page, followed by a page break. Contents starts on its own page and is followed
@@ -179,10 +201,45 @@ with your module's counting policy.
 
 `npm run wordcount` prints, for example, `Word count: 251 (244 excluding in-text
 citations) — 12.6% of 2000`. The percentage and word-limit warning use the higher
-count, including in-text citations. Exceeding the limit warns on stderr and does
-not fail the build. `npm run html` prints the same result at the end. For a
-standalone Markdown fixture, run `node scripts/wordcount.mjs path/to/file.md`;
-include citation metadata in the fixture when citing sources.
+count, including in-text citations. Exceeding the limit warns on stderr in
+`html` and `wordcount`; `npm run verify` turns it into a failing check.
+`npm run html` prints the same result at the end. For a standalone Markdown
+fixture, run `node scripts/wordcount.mjs path/to/file.md`; include citation
+metadata in the fixture when citing sources.
+
+## Verification
+
+`npm run verify` runs the full build (render, HTML, PDF), then reports:
+
+- **pages** — the PDF page count, read directly from the PDF without `pdfinfo`
+  or another external tool.
+- **words** — body words including in-text citations, and words excluding them,
+  using the same rules as `npm run wordcount`.
+- **limits** — `wordLimit` and optional `pageLimit` from `project.json` meta.
+- **diagnostics** — Pandoc warnings that mean broken output, such as
+  `Citeproc: citation ... not found`. Unknown cross-references already fail the
+  build.
+
+It prints one line per check with ✓ or ✗ and a final summary. The exit code is 0
+when every check passes and 1 otherwise. `npm run verify -- --json` writes
+**only** one JSON object to stdout; build output and diagnostics go to stderr:
+
+```json
+{
+  "pass": true,
+  "pages": 7,
+  "words": 271,
+  "wordsExcludingCitations": 263,
+  "pageLimit": null,
+  "wordLimit": 2000,
+  "errors": [],
+  "warnings": []
+}
+```
+
+`pages` is `null` when the PDF step fails, including when no Chromium-based
+browser is available; `errors` then explains how to install one. The Quire
+editor's Build button runs `npm run verify -- --json`; in Quire press ⌘B.
 
 ## References and citation style
 
@@ -220,14 +277,17 @@ To change styles, add a CSL file under `styles/` and change the `--csl` path in
 `scripts/build.mjs` renders the Knap templates and delegates diagram rendering
 to `scripts/mermaid.mjs`; `scripts/assemble.mjs` replaces an optional appendix
 marker (duplicates are rejected). `scripts/html.mjs` publishes HTML and calls `scripts/wordcount.mjs`.
-`scripts/pdf.mjs` prints it. The filters, template and stylesheet are local.
+`scripts/pdf.mjs` prints it. `scripts/verify.mjs` builds, checks limits and
+reports; `scripts/pdf-pages.mjs` counts pages without external tools. The
+filters, template and stylesheet are local.
 
 `npm test` uses Node's test runner and installed Pandoc. Tests cover assembly
 and marker diagnostics, HTML numbering and links for every target type,
 citation coexistence, embedded SVGs/CSS, title metadata, optional contents,
 unnumbered References/Appendix, unknown targets, Mermaid errors with source
-lines and word-count exclusions. Publication tests use isolated temporary
-report clones and do not modify your source files.
+lines, word-count exclusions, and verification (PDF page counting, JSON output,
+limits and missing browsers). Publication tests use isolated temporary report
+clones and do not modify your source files.
 
 GitHub Actions uses `ubuntu-24.04`, Node 22 and Pandoc pinned to 3.9.0.2. It runs
 `npm ci`, `npm run check`, `npm test`, then `npm run pdf`, using the runner's
